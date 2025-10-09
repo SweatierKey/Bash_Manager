@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Controlla la validita' dell'inventario.
 
-source "$(dirname "$0")/../lib/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 
 is_comment() {
     local line="$1"
@@ -69,14 +69,15 @@ get_group() {
     fi
 }
 
-is_children_group() {
+is_nested_group() {
     local line="$1"
-    [[ "$line" =~ ^\[[a-zA-Z0-9_-]+:children\]$ ]] && return 0 || return 1
+    [[ "$line" =~ ^([a-zA-Z0-9_-]+)$ ]] && return 0 || return 1
+    
 }
 
-get_children_group() {
+get_nested_group() {
     local line="$1"
-    if [[ "$line" =~ ^\[[a-zA-Z0-9_-]+:children\]$ ]]; then
+    if [[ "$line" =~ ^([a-zA-Z0-9_-]+)$ ]]; then
         echo "${BASH_REMATCH[1]}"
         return 0
     else
@@ -84,6 +85,20 @@ get_children_group() {
     fi
 }
 
+is_parent_group() {
+    local line="$1"
+    [[ "$line" =~ ^\[([a-zA-Z0-9_-]+):children\]$ ]] && return 0 || return 1
+}
+
+get_parent_group() {
+    local line="$1"
+    if [[ "$line" =~ ^\[([a-zA-Z0-9_-]+):children\]$ ]]; then
+        echo "${BASH_REMATCH[1]}"
+        return 0
+    else
+        return 1
+    fi
+}
 
 is_valid_remote() {
     local line="$1"
@@ -107,18 +122,12 @@ host_array() {
         line=$(trim "$line")
         
         # salta linee vuote e commenti
-        if is_line_empty "$line" || is_comment "$line"; then
-            continue
-        fi
+        if is_line_empty "$line" || is_comment "$line"; then continue; fi
         
         # controlla se e' un gruppo
         if is_group "$line"; then
             current_group=$(get_group "$line")
-            if [[ "$current_group" == "$target_group" ]]; then
-                in_target_group=true
-            else
-                in_target_group=false
-            fi
+            in_target_group=$([[ "$current_group" == "$target_group" ]] && echo true || echo false)
             continue
         fi
         
@@ -128,13 +137,16 @@ host_array() {
         fi
     done < "$inventory_file"
     
-    echo "${hosts[@]}"
+    printf "%s\n" "${hosts[@]}"
 }
 
 # crea un'array di gruppi figli per un dato gruppo padre
-children_groups() {
+# quindi restituisce i gruppi figli di un gruppo padre
+# solo se il gruppo target e' un gruppo padre
+children_groups_array() {
     local inventory_file="$1"
-    local parent_group="$2"
+    local parent_group=""
+    local target_group="$2"
     local -a children=()
     local in_parent_group=false
     
@@ -143,29 +155,30 @@ children_groups() {
         line=$(trim "$line")
         
         # salta linee vuote e commenti
-        if is_line_empty "$line" || is_comment "$line"; then
+        if is_line_empty "$line" || is_comment "$line"; then continue; fi
+        
+        # controlla se e' un gruppo padre
+        if is_parent_group "$line"; then
+            parent_group=$(get_parent_group "$line")
+            in_parent_group=$([[ "$target_group" == "$parent_group" ]] && echo true || echo false)
             continue
         fi
         
-        # controlla se e' un gruppo figli
-        if is_children_group "$line"; then
-            current_group=$(get_children_group "$line")
-            if [[ "$current_group" == "$parent_group" ]]; then
-                in_parent_group=true
-            else
-                in_parent_group=false
-            fi
+        # Se trovi una nuova sezione di definizione gruppo, esci dalla sezione figli
+        if (is_group "$line" || is_parent_group "$line") && $in_parent_group; then
+            in_parent_group=false
             continue
         fi
         
-        # se siamo nel gruppo padre, aggiungi il gruppo figlio all'array
-        if $in_parent_group && is_group "$line"; then
-            child_group=$(get_group "$line")
+        
+        # Se siamo nella sezione figli, aggiungi il gruppo
+        if $in_parent_group && is_nested_group "$line"; then
+            child_group=$(get_nested_group "$line")
             children+=("$child_group")
         fi
     done < "$inventory_file"
     
-    echo "${children[@]}"
+    printf "%s\n" "${children[@]}"
 }
 
 # controlla la validita' dell'inventory file e del gruppo target
