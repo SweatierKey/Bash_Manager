@@ -3,62 +3,6 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 
-is_comment() {
-    local line="$1"
-    [[ "$line" =~ ^#.*$ ]] && return 0 || return 1
-}
-
-is_line_empty() {
-    local line="$1"
-    [[ -z "$line" ]] && return 0 || return 1
-}
-
-is_duplicate() {
-    local ip="$1"
-    local -n ip_array_ref=$2
-    for existing_ip in "${ip_array_ref[@]}"; do
-        if [[ "$existing_ip" == "$ip" ]]; then
-            return 0
-        fi
-    done
-    return 1
-}
-
-is_unique() {
-    local ip="$1"
-    local -n ip_array_ref=$2
-    for existing_ip in "${ip_array_ref[@]}"; do
-        if [[ "$existing_ip" == "$ip" ]]; then
-            return 1
-        fi
-    done
-    return 0
-}
-
-is_valid_ip() {
-    local ip="$1"
-    local IFS='.'
-    local -a octets=($ip)
-    
-    # Controlla che ci siano esattamente 4 ottetti
-    [[ ${#octets[@]} -eq 4 ]] || return 1
-    
-    for octet in "${octets[@]}"; do
-        # Controlla che ogni ottetto sia un numero tra 0 e 255
-        if ! [[ "$octet" =~ ^[0-9]+$ ]] || ((octet < 0 || octet > 255)); then
-            #todo: loggare errore
-            return 1
-        fi
-    done
-    
-    return 0
-}
-
-is_group() {
-    local line="$1"
-    [[ "$line" =~ ^\[[a-zA-Z0-9_-]+\]$ ]] && return 0 || return 1
-}
-
 get_group() {
     local line="$1"
     if [[ "$line" =~ ^\[([a-zA-Z0-9_-]+)\]$ ]]; then
@@ -67,12 +11,6 @@ get_group() {
     else
         return 1
     fi
-}
-
-is_nested_group() {
-    local line="$1"
-    [[ "$line" =~ ^([a-zA-Z0-9_-]+)$ ]] && return 0 || return 1
-    
 }
 
 get_nested_group() {
@@ -85,11 +23,6 @@ get_nested_group() {
     fi
 }
 
-is_parent_group() {
-    local line="$1"
-    [[ "$line" =~ ^\[([a-zA-Z0-9_-]+):children\]$ ]] && return 0 || return 1
-}
-
 get_parent_group() {
     local line="$1"
     if [[ "$line" =~ ^\[([a-zA-Z0-9_-]+):children\]$ ]]; then
@@ -98,16 +31,6 @@ get_parent_group() {
     else
         return 1
     fi
-}
-
-is_valid_remote() {
-    local line="$1"
-    [[ "$line" =~ ^([a-zA-Z0-9_.-]+|([0-9]{1,3}\.){3}[0-9]{1,3})$ ]] && return 0 || return 1
-}
-
-is_hostname() {
-    local line="$1"
-    [[ "$line" =~ ^[a-zA-Z0-9_.-]+$ ]] && return 0 || return 1
 }
 
 # estrae un'array di host dall'inventory file in base al gruppo target
@@ -122,7 +45,7 @@ host_array() {
         line=$(trim "$line")
         
         # salta linee vuote e commenti
-        if is_line_empty "$line" || is_comment "$line"; then continue; fi
+        if is_line_empty "$line" || is_line_comment "$line"; then continue; fi
         
         # controlla se e' un gruppo
         if is_group "$line"; then
@@ -155,7 +78,7 @@ children_groups_array() {
         line=$(trim "$line")
         
         # salta linee vuote e commenti
-        if is_line_empty "$line" || is_comment "$line"; then continue; fi
+        if is_line_empty "$line" || is_line_comment "$line"; then continue; fi
         
         # controlla se e' un gruppo padre
         if is_parent_group "$line"; then
@@ -201,7 +124,7 @@ check_inventory() {
         line=$(trim "$line")
         
         # salta linee vuote e commenti
-        if is_line_empty "$line" || is_comment "$line"; then
+        if is_line_empty "$line" || is_line_comment "$line"; then
             continue
         fi
         
