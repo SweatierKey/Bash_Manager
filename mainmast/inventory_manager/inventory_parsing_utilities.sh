@@ -39,7 +39,7 @@ is_line_comment() {
 # Ritorna 0 se e' vuota.
 # Ritorna 1 se non e' vuota.
 is_line_empty() {
-    local line="$1"
+	local line="$1"
 	if [[ -z "$line" ]]; then
 		return 0
 	else
@@ -55,14 +55,14 @@ is_line_empty() {
 # Ritorna 0 se la linea e' presente nell'array.
 # Ritorna 1 se la linea non e' presente nell'array.
 is_duplicate() {
-    local line="$1"
-    local -n ip_array_ref=$2
-    for existing_ip in "${ip_array_ref[@]}"; do
-        if [[ "$existing_ip" == "$line" ]]; then
-            return 0
-        fi
-    done
-    return 1
+	local line="$1"
+	local -n ip_array_ref=$2
+	for existing_ip in "${ip_array_ref[@]}"; do
+		if [[ "$existing_ip" == "$line" ]]; then
+			return 0
+		fi
+	done
+	return 1
 }
 
 # is_unique
@@ -73,14 +73,14 @@ is_duplicate() {
 # Ritorna 0 se la stringa e' unica.
 # Ritorna 1 se la stringa non e' unica.
 is_unique() {
-    local line="$1"
-    local -n ip_array_ref=$2
-    for existing_ip in "${ip_array_ref[@]}"; do
-        if [[ "$existing_ip" == "$line" ]]; then
-            return 1
-        fi
-    done
-    return 0
+	local line="$1"
+	local -n ip_array_ref=$2
+	for existing_ip in "${ip_array_ref[@]}"; do
+		if [[ "$existing_ip" == "$line" ]]; then
+			return 1
+		fi
+	done
+	return 0
 }
 
 # is_valid_ip
@@ -92,66 +92,98 @@ is_unique() {
 # Ritorna 0 se la stringa e' un ip valido.
 # Ritorna 1 se la stringa non e' un ip valido.
 is_valid_ip() {
-    local ip="$1"
-    local IFS='.'
-    local -a octets=($ip)
-    
-    # Controlla che ci siano esattamente 4 ottetti
-    [[ ${#octets[@]} -eq 4 ]] || return 1
-    
-    for octet in "${octets[@]}"; do
-        # Controlla che ogni ottetto sia un numero tra 0 e 255
-        if ! [[ "$octet" =~ ^[0-9]+$ ]] || ((octet < 0 || octet > 255)); then
-            #todo: loggare errore
-            return 1
-        fi
-    done
-    
-    return 0
+	local ip="$1"
+	local IFS='.'
+	local -a octets=($ip)
+	
+	# Controlla che ci siano esattamente 4 ottetti
+	[[ ${#octets[@]} -eq 4 ]] || return 1
+	
+	for octet in "${octets[@]}"; do
+		# Controlla che ogni ottetto sia un numero tra 0 e 255
+		if ! [[ "$octet" =~ ^[0-9]+$ ]] || ((octet < 0 || octet > 255)); then
+			#todo: loggare errore
+			return 1
+		fi
+	done
+	
+	return 0
 }
 
 # is_group
 # Funzione che controlla se una stringa e' un gruppo,
-# quindi se 
+# quindi se e' un gruppo normale, contenente host ip o hostname.
+# Verifica con regex se e' un gruppo normale.
+#
+# Ritorna 0 se e' un gruppo.
+# Ritorna 1 se non e' un gruppo.
 is_group() {
-    local line="$1"
-    if [[ "$line" =~ ^\[[a-zA-Z0-9_-]+\]$ ]]; then
+	local line="$1"
+	if [[ "$line" =~ ^\[[a-zA-Z0-9_-]+\]$ ]]; then
 		return 0
 	else
 		return 1
 	fi
 }
 
+# is_nested_group
+# Funzione che controlla se una stringa e' un gruppo,
+# quindi se e' un gruppo normale, contenente host ip o hostname.
+# Verifica con regex se e' un gruppo normale.
+#
+# Ritorna 0 se e' un gruppo.
+# Ritorna 1 se non e' un gruppo.
 is_nested_group() {
-    local line="$1"
-    if [[ "$line" =~ ^([a-zA-Z0-9_-]+)$ ]]; then
+	local line="$1"
+	if [[ "$line" =~ ^([a-zA-Z0-9_-]+)$ ]]; then
 		return 0
 	else
 		return 1
 	fi
 }
 
+# is_parent_group
+# Funzione che controlla se una stringa e' un gruppo di gruppi.
+# Verifica con regex se e' un gruppo di gruppi cercando dopo il nome del gruppo
+# il pattern ":children".
+#
+# Ritorna 0 se e' un gruppo di gruppi.
+# Ritorna 1 se non e' un gruppo di gruppi.
 is_parent_group() {
-    local line="$1"
-    if [[ "$line" =~ ^\[([a-zA-Z0-9_-]+):children\]$ ]]; then
+	local line="$1"
+	if [[ "$line" =~ ^\[([a-zA-Z0-9_-]+):children\]$ ]]; then
 		return 0
 	else
 		return 1
 	fi
 }
 
+# is_valid_remote
+# Funzione che controlla se una riga e' un remote valido sintatticamente.
+# Riceve in input una stringa contenente la riga da controllare.
+# Verifica con regex se e' un remote valido.
+#
+# Ritorna 0 se e' un remote valido.
+# Ritorna 1 se non e' un remote valido.
 is_valid_remote() {
-    local line="$1"
-    if [[ "$line" =~ ^([a-zA-Z0-9_.-]+|([0-9]{1,3}\.){3}[0-9]{1,3})$ ]]; then
+	local line="$1"
+	if [[ "$line" =~ ^([a-zA-Z0-9_.-]+|([0-9]{1,3}\.){3}[0-9]{1,3})$ ]]; then
 		return 0
 	else
 		return 1
 	fi
 }
 
+# is_hostname
+# Funzione che controlla se una riga e' un hostname.
+# Riceve in input una stringa contenente la riga da controllare.
+# Verifica con regex se e' un hostname valido.
+#
+# Ritorna 0 se e' un hostname valido.
+# Ritorna 1 se non e' un hostname valido.
 is_hostname() {
-    local line="$1"
-    if [[ "$line" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
+	local line="$1"
+	if [[ "$line" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
 		return 0
 	else
 		return 1
