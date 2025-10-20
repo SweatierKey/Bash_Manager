@@ -4,7 +4,7 @@
 source "$(dirname "$0")/../inventory_manager/inventory_manager.sh"
 
 # funzione che testa la raggiungibilita' di un host
-reachable() {
+is_reachable() {
     local host="$1"
     local port="${2:-22}"
     ( echo >/dev/tcp/"$host"/"$port" ) >/dev/null 2>&1
@@ -23,7 +23,7 @@ connect() {
     readarray -t hosts < <(host_array "$inventory_file" "$target_group")
 
     for host in "$hosts[@]"; do
-        if reachable "$host"; then
+        if is_reachable "$host"; then
             echo "Connessione a $host riuscita"
             connection "$host"
         else
