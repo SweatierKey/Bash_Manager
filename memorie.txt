@@ -1,0 +1,38 @@
+Ho creato le funzioni per capire se la riga è 
+
+
+voglio astrarre la lettura del file. riga per riga
+ma poi non saprei come integrare una funziona che legger riga per riga di un file
+
+
+perchè faccio
+
+funzione che legge il file
+che semplicemente cicla sul file, quindi inutile
+al massimo skippa righe vuote e commenti
+
+
+poi voglio fare
+funziona che estrae tutti i gruppo dal file inventory
+
+oppure
+funzione che estrae tutti gli host che sono sotto il gruppo di selezione.
+
+
+in entrambi i casi poi devo estrarre anche i gruppi :children
+e o per ogni gruppo :children, o se il gruppo selezionato è di tipo children, devo trovare i gruppi figli.
+poi per quei gruppi figli devo prendere o tutti gli host, o solo quelli dei gruppi appartenenti al gruppo :children selezionato.
+
+
+non mi è chiaro quale sia la maniera migliore
+
+penso che se voglio fare un controllo di sintassi totale del file inventory allora puo' avere senso ciclare per tutto e prendere tutto.
+prendere tutti gli host, tutti i gruppi, e tutti i gruppi :children. ed in qualche maniera salvare le loro relazioni. Ma per salvare le loro relazioni penso che finirei per ricreare il file inventory stesso.
+
+
+oppure magari posso evitare di fare un syntax check su tutto il file, ed estrarre solo i target o dal gruppo o dai gruppi del gruppo :children selezionato.
+forse potrebbe essere la maniera migliore.
+
+eppure non mi e' ancora chiaro come dividere il tutto in funzioni brevi e piccole, semplici ed astrabili.
+
+

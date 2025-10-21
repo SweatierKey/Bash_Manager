@@ -47,10 +47,10 @@ inventory_read() {
 	while IFS= read -r line || [[ -n "$line" ]]; do
 		# trim della linea
 		line=$(trim "$line")
-		
+
 		# salta linee vuote e commenti
 		if is_line_empty "$line" || is_line_comment "$line"; then continue; fi
-		
+
 		# controlla se e' un gruppo
 		if is_group "$line"; then
 			if parent_group=$(get_parent_group "$line"); then
@@ -61,14 +61,29 @@ inventory_read() {
 				continue
 			fi
 		fi
-		
+
 		# controlla se e' un host valido
 		if is_valid_remote "$line"; then
 			# gestisci host
 			continue
 		fi
-		
+
 		# altrimenti, linea non valida
 		echo "Linea non valida nell'inventario: $line" >&2
+	done < "$inventory_file"
+}
+
+
+# read_inventory
+# Funzione che legge l'inventory file riga per riga
+# skippando le righe vuote o i commenti
+read_inventory() {
+	local inventory_file="$1"
+	while IFS= read -r line || [[ -n "$line" ]]; do
+		# trim della linea
+		line=$(trim "$line")
+
+		# salta linee vuote e commenti
+		if is_line_empty "$line" || is_line_comment "$line"; then continue; fi
 	done < "$inventory_file"
 }
